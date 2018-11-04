@@ -1,0 +1,18 @@
+// ///////////////////////////////////////////////////////////////////////////////////////
+// @AUTO_GENERATION_MESSAGE@
+// ///////////////////////////////////////////////////////////////////////////////////////
+#pragma once
+
+#include <string>
+
+namespace proj {
+
+inline std::string root_path() {
+    return "@CMAKE_CURRENT_SOURCE_DIR@/";
+}
+
+inline std::string res_path() {
+    return root_path() + "res/";
+}
+
+} // namespace proj

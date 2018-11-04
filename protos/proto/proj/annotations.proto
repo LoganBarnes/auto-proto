@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package proj.proto;
+
+import "google/protobuf/descriptor.proto";
+
+enum Node {
+    NONE = 0;
+    SYNC = 1;
+    ASYNC = 2;
+}
+
+// Annotations
+extend google.protobuf.MessageOptions {
+    Node node = 50000;
+}
+
+extend google.protobuf.FieldOptions {
+    bool initialize_on_startup = 50001;
+}

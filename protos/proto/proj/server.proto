@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package proj.proto;
+
+import "google/protobuf/empty.proto";
+import "proj/state.proto";
+
+// RPC calls
+service Server {
+    rpc dispatch_action (Actions) returns (Response);
+//    rpc stream_state1 (google.protobuf.Empty) returns (stream Sink1);
+    rpc stream_state2 (google.protobuf.Empty) returns (stream Sink2);
+//    rpc stream_state2 (stream google.protobuf.Empty) returns (stream Sink2);
+}
+
+// RPC actions and response
+message Response {
+    string error_msg = 1;
+}
+
+message Actions {
+    oneof action {
+        Source1 source1 = 1;
+        Source2 source2 = 2;
+        Source3 source3 = 3;
+    }
+}

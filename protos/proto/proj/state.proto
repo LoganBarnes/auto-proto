@@ -1,0 +1,75 @@
+syntax = "proto3";
+
+package proj.proto;
+
+import "proj/annotations.proto";
+
+message Source1 {
+    option (node) = SYNC;
+    string state = 1;
+}
+
+message Source2 {
+    option (node) = SYNC;
+    string state = 1;
+}
+
+message Source3 {
+    option (node) = SYNC;
+    string state = 1;
+}
+
+
+message Inner1 {
+    option (node) = SYNC;
+    string state = 1;
+    Source1 source1 = 2;
+}
+
+message Inner2 {
+    option (node) = SYNC;
+    string state = 1;
+    Source2 source2 = 2;
+}
+
+message Inner3 {
+    option (node) = SYNC;
+    string state = 1;
+    Inner1 inner1 = 2;
+    Inner2 inner2 = 3;
+    Source2 source2 = 4;
+}
+
+message Inner4 {
+    option (node) = SYNC;
+    string state = 1;
+    Source3 source3 = 2;
+    Inner3 inner3 = 3;
+}
+
+message Inner5 {
+    option (node) = SYNC;
+    string state = 1;
+    Inner3 inner3 = 3;
+    Inner4 inner4 = 2;
+}
+
+message Inner6 {
+    option (node) = SYNC;
+    string state = 1;
+    Inner4 inner4 = 2;
+}
+
+message Inner7 {
+    option (node) = SYNC;
+    string state = 1;
+    Inner4 inner4 = 2;
+}
+
+message Sink2 {
+    option (node) = SYNC;
+    string final_update = 1;
+    Inner5 inner5 = 2;
+    Inner6 inner6 = 3;
+    Inner7 inner7 = 4;
+}
