@@ -96,4 +96,5 @@ target_link_libraries(proj_proto
 target_include_directories(proj_proto SYSTEM
         PUBLIC ${PROTO_DST_DIR}
         PUBLIC thirdparty_src
+        PUBLIC ${GRPC_INCLUDE_DIRS}
         )

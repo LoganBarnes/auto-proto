@@ -45,16 +45,16 @@ configure_file(src/proj_config.h.in ${CMAKE_BINARY_DIR}/proj/proj_config.h)
 ### Clang-Tidy ###
 ##################
 if (NOT PROJ_ARM_SERVER_ONLY)
-find_program(CLANG_TIDY_EXE
-        NAMES "clang-tidy"
-        DOC "Path to clang-tidy executable"
-        )
-if (NOT CLANG_TIDY_EXE)
-    message(STATUS "clang-tidy not found.")
-else ()
-    message(STATUS "clang-tidy found: ${CLANG_TIDY_EXE}")
-    set(DO_CLANG_TIDY "${CLANG_TIDY_EXE}" "-format-style=file" "-fix" "-fix-errors")
-endif ()
+    find_program(CLANG_TIDY_EXE
+            NAMES "clang-tidy"
+            DOC "Path to clang-tidy executable"
+            )
+    if (NOT CLANG_TIDY_EXE)
+        message(STATUS "clang-tidy not found.")
+    else ()
+        message(STATUS "clang-tidy found: ${CLANG_TIDY_EXE}")
+        set(DO_CLANG_TIDY "${CLANG_TIDY_EXE}" "-format-style=file" "-fix" "-fix-errors")
+    endif ()
 endif ()
 
 ###########################
