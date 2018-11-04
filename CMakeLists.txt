@@ -2,13 +2,18 @@ cmake_minimum_required(VERSION 3.12)
 project(ProtoServer)
 
 option(PROJ_BUILD_TESTS "Build Googletest unit tests" OFF)
+option(PROJ_ARM_SERVER_ONLY "Compile only the server using C++14" ON)
 
 #############################
 ### Project Configuration ###
 #############################
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+if (PROJ_ARM_SERVER_ONLY)
+    set(CMAKE_CXX_STANDARD 14)
+else ()
+    set(CMAKE_CXX_STANDARD 17)
+endif ()
 
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 if (NOT CMAKE_BUILD_TYPE)
@@ -64,6 +69,8 @@ add_subdirectory(external)
 ###############
 ### Project ###
 ###############
+
+### UTIL ###
 file(GLOB_RECURSE UTIL_SOURCE_FILES
         LIST_DIRECTORIES false
         CONFIGURE_DEPENDS
@@ -73,10 +80,11 @@ file(GLOB_RECURSE UTIL_SOURCE_FILES
 add_library(util ${UTIL_SOURCE_FILES})
 
 target_include_directories(util PUBLIC src PUBLIC ${CMAKE_BINARY_DIR})
-target_link_libraries(util PUBLIC proj_proto PUBLIC imgui)
+target_link_libraries(util PUBLIC proj_proto)
 set_target_properties(util PROPERTIES CXX_CLANG_TIDY "${DO_CLANG_TIDY}")
 target_compile_options(util PUBLIC ${PROJ_COMPILE_FLAGS})
 
+### SERVER ###
 file(GLOB_RECURSE SERVER_SOURCE_FILES
         LIST_DIRECTORIES false
         CONFIGURE_DEPENDS
@@ -89,33 +97,41 @@ target_include_directories(server PUBLIC src)
 target_link_libraries(server PUBLIC util PUBLIC gRPC::grpc++_reflection)
 set_target_properties(server PROPERTIES CXX_CLANG_TIDY "${DO_CLANG_TIDY}")
 
-file(GLOB_RECURSE CLIENT_SOURCE_FILES
-        LIST_DIRECTORIES false
-        CONFIGURE_DEPENDS
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/client/*
-        )
-
-add_library(client ${CLIENT_SOURCE_FILES})
-
-target_include_directories(client PUBLIC src)
-target_link_libraries(client PUBLIC util)
-set_target_properties(client PROPERTIES CXX_CLANG_TIDY "${DO_CLANG_TIDY}")
-
+# Server only exec
 add_executable(run_server src/server.cpp)
 target_link_libraries(run_server server)
 set_target_properties(run_server PROPERTIES CXX_CLANG_TIDY "${DO_CLANG_TIDY}")
 
-add_executable(run_client src/client.cpp)
-target_link_libraries(run_client client)
-set_target_properties(run_client PROPERTIES CXX_CLANG_TIDY "${DO_CLANG_TIDY}")
+### CLIENTS ###
+if (NOT PROJ_ARM_SERVER_ONLY)
 
-add_executable(client_and_server src/client_and_server.cpp)
-target_link_libraries(client_and_server client server)
-set_target_properties(client_and_server PROPERTIES CXX_CLANG_TIDY "${DO_CLANG_TIDY}")
+    file(GLOB_RECURSE CLIENT_SOURCE_FILES
+            LIST_DIRECTORIES false
+            CONFIGURE_DEPENDS
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/client/*
+            )
 
-add_executable(stream_test src/generic_stream_test.cpp)
-target_link_libraries(stream_test util)
-set_target_properties(stream_test PROPERTIES CXX_CLANG_TIDY "${DO_CLANG_TIDY}")
+    add_library(client ${CLIENT_SOURCE_FILES})
+
+    target_include_directories(client PUBLIC src)
+    target_link_libraries(client PUBLIC util PUBLIC imgui)
+    set_target_properties(client PROPERTIES CXX_CLANG_TIDY "${DO_CLANG_TIDY}")
+
+    # Client only exec
+    add_executable(run_client src/client.cpp)
+    target_link_libraries(run_client client)
+    set_target_properties(run_client PROPERTIES CXX_CLANG_TIDY "${DO_CLANG_TIDY}")
+
+    # Client and server exec
+    add_executable(client_and_server src/client_and_server.cpp)
+    target_link_libraries(client_and_server client server)
+    set_target_properties(client_and_server PROPERTIES CXX_CLANG_TIDY "${DO_CLANG_TIDY}")
+
+    # Generic client test exec
+    add_executable(stream_test src/generic_stream_test.cpp)
+    target_link_libraries(stream_test util)
+    set_target_properties(stream_test PROPERTIES CXX_CLANG_TIDY "${DO_CLANG_TIDY}")
+endif ()
 
 ###############
 ### Testing ###

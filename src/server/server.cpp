@@ -19,9 +19,9 @@ namespace svr {
 Server::Server(std::string server_address)
     : server_address_(std::move(server_address))
     , stream_queue_(std::make_shared<util::BlockingQueue<proj::proto::Sink2>>())
-    , server_tree_(std::make_unique<ServerTree>())
-    , stream_handler_(std::make_unique<StreamHandler<proj::proto::Sink2>>())
-    , compute_test_(std::make_unique<Compute>()) {
+    , server_tree_(util::make_unique<ServerTree>())
+    , stream_handler_(util::make_unique<StreamHandler<proj::proto::Sink2>>())
+    , compute_test_(util::make_unique<Compute>()) {
 
     server_tree_->add_output(stream_queue_);
 
@@ -107,27 +107,6 @@ grpc::Status Server::dispatch_action(grpc::ServerContext* /*context*/,
 
     return grpc::Status::OK;
 }
-
-//grpc::Status
-//Server::stream_state2(::grpc::ServerContext* /*context*/,
-//                      ::grpc::ServerReaderWriter<::proj::proto::Sink2, ::google::protobuf::Empty>* stream) {
-//    std::cout << "Client connected" << std::endl;
-//#if 0
-//    proj::proto::Sink2 sink;
-//    sink.set_final_update("Blargy blarsa sdfwef");
-//    stream->Write(sink);
-//    std::this_thread::sleep_for(std::chrono::seconds(5));
-//    sink.set_final_update("Write 2");
-//    stream->Write(sink);
-//    std::this_thread::sleep_for(std::chrono::seconds(2));
-//    sink.set_final_update("Final write");
-//    stream->Write(sink);
-//#else
-//    stream_handler_->handle_client(context, writer);
-//#endif
-//    std::cout << "Client disconnected" << std::endl;
-//    return grpc::Status::OK;
-//}
 
 grpc::Status Server::stream_state2(grpc::ServerContext* context,
                                    const google::protobuf::Empty* /*request*/,

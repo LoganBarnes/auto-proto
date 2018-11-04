@@ -15,4 +15,6 @@ inline std::string res_path() {
     return root_path() + "res/";
 }
 
+#cmakedefine PROJ_ARM_SERVER_ONLY
+
 } // namespace proj

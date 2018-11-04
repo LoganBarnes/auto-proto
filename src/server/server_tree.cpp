@@ -5,8 +5,6 @@
 
 #include <proj/annotations.pb.h>
 
-#include <imgui.h>
-
 #include <unordered_map>
 #include <sstream>
 #include <thread>
@@ -169,7 +167,7 @@ ServerTree::NodeKey ServerTree::build_node(google::protobuf::Message* message) {
             return nullptr;
         }
 
-        auto node = std::make_unique<ServerNode>(util::clone_msg(*message));
+        auto node = util::make_unique<ServerNode>(util::clone_msg(*message));
         std::tie(iter, std::ignore) = nodes_.emplace(key, std::move(node));
     } else {
         return key;

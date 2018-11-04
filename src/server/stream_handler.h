@@ -13,6 +13,7 @@ namespace svr {
 template <typename T>
 class StreamHandler {
 public:
+    StreamHandler();
     void handle_client(grpc::ServerContext* context, grpc::ServerWriter<T>* writer);
 
     void send_data(T data);
@@ -26,8 +27,13 @@ private:
     util::Semaphore pop_block_;
     util::Semaphore loop_block_;
 
-    std::atomic_bool attempt_shutdown_ = false;
+    std::atomic_bool attempt_shutdown_;
 };
+
+template <typename T>
+StreamHandler<T>::StreamHandler() {
+    attempt_shutdown_.store(false);
+}
 
 template <typename T>
 void StreamHandler<T>::handle_client(grpc::ServerContext* context, grpc::ServerWriter<T>* writer) {

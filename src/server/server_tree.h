@@ -3,6 +3,12 @@
 #include "util/message_util.h"
 #include "util/blocking_deque.h"
 
+#include <proj/proj_config.h>
+
+#ifdef PROJ_ARM_SERVER_ONLY
+#include "util/util.h"
+#endif
+
 #include <google/protobuf/dynamic_message.h>
 
 #include <memory>
@@ -10,6 +16,7 @@
 #include <unordered_set>
 #include <proj/annotations.pb.h>
 #include <fstream>
+#include <tuple>
 
 namespace svr {
 
@@ -21,7 +28,8 @@ public:
      * @tparam T is the message type
      * @return true if output successfully added, false if output already exists
      */
-    template <typename T, typename = std::enable_if_t<std::is_base_of<google::protobuf::Message, T>::value>>
+    template <typename T,
+              typename = typename std::enable_if<std::is_base_of<google::protobuf::Message, T>::value>::type>
     bool add_output(std::shared_ptr<util::BlockingQueue<T>> queue);
 
     template <typename T, typename Func, typename... Args>
@@ -45,7 +53,11 @@ private:
 
         void compute(google::protobuf::Message* message) override {
             std::get<sizeof...(Args)>(arguments_) = dynamic_cast<T*>(message);
+#ifdef PROJ_ARM_SERVER_ONLY
+            util::apply(func_, arguments_);
+#else
             std::apply(func_, arguments_);
+#endif
         }
 
     private:
@@ -108,7 +120,7 @@ private:
 
 template <typename T, typename>
 bool ServerTree::add_output(std::shared_ptr<util::BlockingQueue<T>> queue) {
-    auto data = std::make_unique<SinkData<T>>(std::move(queue));
+    auto data = util::make_unique<SinkData<T>>(std::move(queue));
 
     auto key = get_key(data->get_data());
     if (sinks_.find(key) != sinks_.end()) {
@@ -129,13 +141,24 @@ bool ServerTree::add_output(std::shared_ptr<util::BlockingQueue<T>> queue) {
 
 template <typename T, typename Func, typename... Args>
 void ServerTree::register_function(Func func, Args... args) {
-    static_assert(std::is_base_of<google::protobuf::Message, T>::value);
+    static_assert(std::is_base_of<google::protobuf::Message, T>::value, "Can ony register functions for message types");
     T tmp;
     util::MsgPkg msg_pkg(&tmp);
     assert(msg_pkg.desc->options().GetExtension(proj::proto::node) != proj::proto::Node::NONE);
+
+#ifdef PROJ_ARM_SERVER_ONLY
+    auto key = get_key(tmp);
+    auto iter = compute_functions_.find(key);
+    if (iter != compute_functions_.end()) {
+        compute_functions_.erase(key);
+    }
+    compute_functions_.emplace(key,
+                               util::make_unique<TypedComputer<T, Func, Args...>>(func, std::forward<Args>(args)...));
+#else
     compute_functions_.insert_or_assign(get_key(tmp),
                                         std::make_unique<TypedComputer<T, Func, Args...>>(func,
                                                                                           std::forward<Args>(args)...));
+#endif
 }
 
 } // namespace svr

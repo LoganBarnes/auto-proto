@@ -41,7 +41,8 @@ void iterate_msg_fields(const google::protobuf::Message& msg, const Func& func) 
     }
 }
 
-template <typename Msg, typename = std::enable_if_t<std::is_base_of<google::protobuf::Message, Msg>::value>>
+template <typename Msg,
+          typename = typename std::enable_if<std::is_base_of<google::protobuf::Message, Msg>::value>::type>
 static std::unique_ptr<Msg> clone_msg(const Msg& msg) {
     std::unique_ptr<Msg> p(msg.New());
     p->CopyFrom(msg);
