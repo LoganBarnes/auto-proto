@@ -69,8 +69,8 @@ private:
 
     struct ServerNode {
         std::unique_ptr<google::protobuf::Message> message; // stored data
-        std::unordered_map<int, NodeKey> inputs = {};
-        std::unordered_map<NodeKey, int> outputs = {};
+        std::unordered_map<int, NodeKey> inputs;
+        std::unordered_map<NodeKey, int> outputs;
 
         bool valid = false;
         std::string debug_name = {};

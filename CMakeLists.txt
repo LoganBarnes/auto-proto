@@ -44,6 +44,7 @@ configure_file(src/proj_config.h.in ${CMAKE_BINARY_DIR}/proj/proj_config.h)
 ##################
 ### Clang-Tidy ###
 ##################
+if (NOT PROJ_ARM_SERVER_ONLY)
 find_program(CLANG_TIDY_EXE
         NAMES "clang-tidy"
         DOC "Path to clang-tidy executable"
@@ -54,10 +55,14 @@ else ()
     message(STATUS "clang-tidy found: ${CLANG_TIDY_EXE}")
     set(DO_CLANG_TIDY "${CLANG_TIDY_EXE}" "-format-style=file" "-fix" "-fix-errors")
 endif ()
+endif ()
 
 ###########################
 ### Protobuf Generation ###
 ###########################
+if (PROJ_ARM_SERVER_ONLY)
+    list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/external/cmake)
+endif ()
 find_package(gRPC REQUIRED)
 add_subdirectory(protos)
 
@@ -94,7 +99,7 @@ file(GLOB_RECURSE SERVER_SOURCE_FILES
 add_library(server ${SERVER_SOURCE_FILES})
 
 target_include_directories(server PUBLIC src)
-target_link_libraries(server PUBLIC util PUBLIC gRPC::grpc++_reflection)
+target_link_libraries(server PUBLIC util PUBLIC ${GRPC++_REFLECTION_LIBRARY})
 set_target_properties(server PROPERTIES CXX_CLANG_TIDY "${DO_CLANG_TIDY}")
 
 # Server only exec
@@ -153,7 +158,7 @@ endif ()
 ####################
 # only format things if this is the parent directory
 get_directory_property(has_parent PARENT_DIRECTORY)
-if (NOT has_parent)
+if (NOT has_parent AND NOT PROJ_ARM_SERVER_ONLY)
     find_program(CLANG_FORMAT_EXE
             NAMES "clang-format"
             DOC "Path to clang-format executable"

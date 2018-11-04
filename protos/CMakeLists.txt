@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
 find_package(Protobuf REQUIRED)
 find_package(gRPC REQUIRED)
 
@@ -31,7 +33,7 @@ function(GRPC_GENERATE_CPP SRCS HDRS SRC_DIR DEST_DIR)
     set(${HDRS})
     set(ABS_PROTOS "")
 
-    get_target_property(GRPC_CPP_PLUGIN gRPC::grpc_cpp_plugin LOCATION)
+    #get_target_property(GRPC_CPP_PLUGIN gRPC::grpc_cpp_plugin LOCATION)
     foreach (PROTO_FILE ${ARGN})
         get_filename_component(ABS_FILE ${PROTO_FILE} ABSOLUTE)
 
@@ -57,7 +59,7 @@ function(GRPC_GENERATE_CPP SRCS HDRS SRC_DIR DEST_DIR)
             ${_protobuf_include_path}
             --plugin=protoc-gen-grpc=${GRPC_CPP_PLUGIN}
             ${ABS_PROTOS}
-            DEPENDS ${SRC_DIR} ${ABS_PROTOS} protobuf::protoc gRPC::grpc_cpp_plugin
+            DEPENDS ${SRC_DIR} ${ABS_PROTOS} protobuf::protoc ${GRPC_CPP_PLUGIN}
             COMMENT "Running C++ gRPC compiler"
             VERBATIM
     )
@@ -87,8 +89,9 @@ add_library(proj_proto
         thirdparty_src/proto_reflection_descriptor_database
         )
 target_link_libraries(proj_proto
-        PUBLIC gRPC::grpc++
+        PUBLIC ${GRPC++_LIBRARY}
         PUBLIC protobuf::libprotobuf
+        Threads::Threads
         )
 target_include_directories(proj_proto SYSTEM
         PUBLIC ${PROTO_DST_DIR}

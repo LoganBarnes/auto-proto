@@ -10,7 +10,6 @@
 #include <condition_variable>
 #include <queue>
 #include <util/blocking_deque.h>
-#include "../../cmake-build-debug/protos/proto/proj/server.pb.h"
 
 namespace svr {
 class ServerTree;

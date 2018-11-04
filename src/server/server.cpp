@@ -2,7 +2,6 @@
 #include "server/server_tree.h"
 #include "server/stream_handler.h"
 #include "server/compute_functions.h"
-#include "../../cmake-build-debug/protos/proto/proj/state.pb.h"
 #include "server.h"
 
 #include <grpcpp/server.h>
