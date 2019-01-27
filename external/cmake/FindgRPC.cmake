@@ -63,7 +63,7 @@
 #   The protobuf lite library
 # ``PROTOBUF_LITE_LIBRARY_DEBUG``
 #   The protobuf lite library (debug)
-# 
+#
 # ``GRPC_LIBRARY``
 #   The grpc library
 # ``GRPC++_LIBRARY``
@@ -82,10 +82,10 @@
 #   protobuf_generate_python(PROTO_PY foo.proto)
 #   grpc_generate_cpp(GRPC_SRCS GRPC_HDRS foo.proto)
 #   grpc_generate_python(GRPC_PY foo.proto)
-#   add_executable(bar bar.cc 
-#       ${PROTO_SRCS} 
-#       ${PROTO_HDRS} 
-#       ${GRPC_SRCS} 
+#   add_executable(bar bar.cc
+#       ${PROTO_SRCS}
+#       ${PROTO_HDRS}
+#       ${GRPC_SRCS}
 #       ${GRPC_HDRS}
 #   )
 #   target_link_libraries(bar ${GRPC_LIBRARIES})
@@ -152,344 +152,94 @@
 #
 # Distributed under the OSI-approved BSD License:
 #
-# 1. Redistributions of source code must retain 
-#    the above copyright notice, this list of conditions 
+# 1. Redistributions of source code must retain
+#    the above copyright notice, this list of conditions
 #    and the following disclaimer.
-# 2. Redistributions in binary form must reproduce the above 
-#    copyright notice, this list of conditions and the following 
-#    disclaimer in the documentation and/or other materials provided 
-#    with the distribution. 
-# 3. Neither the name of the copyright holder nor the names of its 
-#    contributors may be used to endorse or promote products derived 
+# 2. Redistributions in binary form must reproduce the above
+#    copyright notice, this list of conditions and the following
+#    disclaimer in the documentation and/or other materials provided
+#    with the distribution.
+# 3. Neither the name of the copyright holder nor the names of its
+#    contributors may be used to endorse or promote products derived
 #    from this software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED 
-# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A 
-# PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER 
-# OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
-# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
-# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR 
-# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
-# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
-# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+# PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER
+# OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # This software is distributed WITHOUT ANY WARRANTY; without even the
 # implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #=============================================================================
 
-function(PROTOBUF_GENERATE_CPP SRCS HDRS)
-  if(NOT ARGN)
-    message(SEND_ERROR "Error: PROTOBUF_GENERATE_CPP() called without any proto files")
-    return()
-  endif()
-
-  if(PROTOBUF_GENERATE_CPP_APPEND_PATH)
-    # Create an include path for each file specified
-    foreach(FIL ${ARGN})
-      get_filename_component(ABS_FIL ${FIL} ABSOLUTE)
-      get_filename_component(ABS_PATH ${ABS_FIL} PATH)
-      list(FIND _protobuf_include_path ${ABS_PATH} _contains_already)
-      if(${_contains_already} EQUAL -1)
-          list(APPEND _protobuf_include_path -I ${ABS_PATH})
-      endif()
-    endforeach()
-  else()
-    set(_protobuf_include_path)
-  endif()
-
-  if(DEFINED PROTOBUF_IMPORT_DIRS)
-    foreach(DIR ${PROTOBUF_IMPORT_DIRS})
-      get_filename_component(ABS_PATH ${DIR} ABSOLUTE)
-      list(FIND _protobuf_include_path ${ABS_PATH} _contains_already)
-      if(${_contains_already} EQUAL -1)
-          list(APPEND _protobuf_include_path -I ${ABS_PATH})
-      endif()
-    endforeach()
-  endif()
-
-  set(${SRCS})
-  set(${HDRS})
-  foreach(FIL ${ARGN})
-    get_filename_component(ABS_FIL ${FIL} ABSOLUTE)
-    get_filename_component(FIL_WE ${FIL} NAME_WE)
-    get_filename_component(FIL_DIR ${ABS_FIL} DIRECTORY)
-
-    list(APPEND _protobuf_include_path -I ${FIL_DIR})
-    list(APPEND ${SRCS} "${CMAKE_BINARY_DIR}/${FIL_WE}.pb.cc")
-    list(APPEND ${HDRS} "${CMAKE_BINARY_DIR}/${FIL_WE}.pb.h")
-
-    add_custom_command(
-      OUTPUT "${CMAKE_BINARY_DIR}/${FIL_WE}.pb.cc"
-             "${CMAKE_BINARY_DIR}/${FIL_WE}.pb.h"
-      COMMAND  ${PROTOBUF_PROTOC_EXECUTABLE}
-      ARGS --cpp_out  ${CMAKE_BINARY_DIR} ${_protobuf_include_path} ${ABS_FIL}
-      DEPENDS ${ABS_FIL} ${PROTOBUF_PROTOC_EXECUTABLE}
-      COMMENT "Running C++ protocol buffer compiler on ${FIL}"
-      VERBATIM )
-  endforeach()
-
-  set_source_files_properties(${${SRCS}} ${${HDRS}} PROPERTIES GENERATED TRUE)
-  set(${SRCS} ${${SRCS}} PARENT_SCOPE)
-  set(${HDRS} ${${HDRS}} PARENT_SCOPE)
-endfunction()
-
-# protobuf python
-
-function(PROTOBUF_GENERATE_PYTHON SRCS)
-  if(NOT ARGN)
-    message(SEND_ERROR "Error: PROTOBUF_GENERATE_PYTHON() called without any proto files")
-    return()
-  endif()
-
-  if(PROTOBUF_GENERATE_CPP_APPEND_PATH)
-    # Create an include path for each file specified
-    foreach(FIL ${ARGN})
-      get_filename_component(ABS_FIL ${FIL} ABSOLUTE)
-      get_filename_component(ABS_PATH ${ABS_FIL} PATH)
-      list(FIND _protobuf_include_path ${ABS_PATH} _contains_already)
-      if(${_contains_already} EQUAL -1)
-          list(APPEND _protobuf_include_path -I ${ABS_PATH})
-      endif()
-    endforeach()
-  else()
-    set(_protobuf_include_path)
-  endif()
-
-  if(DEFINED PROTOBUF_IMPORT_DIRS)
-    foreach(DIR ${PROTOBUF_IMPORT_DIRS})
-      get_filename_component(ABS_PATH ${DIR} ABSOLUTE)
-      list(FIND _protobuf_include_path ${ABS_PATH} _contains_already)
-      if(${_contains_already} EQUAL -1)
-          list(APPEND _protobuf_include_path -I ${ABS_PATH})
-      endif()
-    endforeach()
-  endif()
-
-  set(${SRCS})
-  foreach(FIL ${ARGN})
-    get_filename_component(ABS_FIL ${FIL} ABSOLUTE)
-    get_filename_component(FIL_WE ${FIL} NAME_WE)
-    get_filename_component(FIL_DIR ${ABS_FIL} DIRECTORY)
-
-    list(APPEND _protobuf_include_path -I ${FIL_DIR})
-    list(APPEND ${SRCS} "${CMAKE_BINARY_DIR}/${FIL_WE}_pb2.py")
-    add_custom_command(
-      OUTPUT "${CMAKE_BINARY_DIR}/${FIL_WE}_pb2.py"
-      COMMAND  ${PROTOBUF_PROTOC_EXECUTABLE} --python_out ${CMAKE_BINARY_DIR} ${_protobuf_include_path} ${ABS_FIL}
-      DEPENDS ${ABS_FIL} ${PROTOBUF_PROTOC_EXECUTABLE}
-      COMMENT "Running Python protocol buffer compiler on ${FIL}"
-      VERBATIM )
-  endforeach()
-
-  set(${SRCS} ${${SRCS}} PARENT_SCOPE)
-endfunction()
-
-############################## 
-# GRPC Generate Function
-# grpc cpp
-
-function(GRPC_GENERATE_CPP SRCS HDRS)
-  if(NOT ARGN)
-    message(SEND_ERROR "Error: GRPC_GENERATE_CPP() called without any proto files")
-    return()
-  endif()
-
-  if(GRPC_GENERATE_CPP_APPEND_PATH)
-    # Create an include path for each file specified
-    foreach(FIL ${ARGN})
-      get_filename_component(ABS_FIL ${FIL} ABSOLUTE)
-      get_filename_component(ABS_PATH ${ABS_FIL} PATH)
-      list(FIND _protobuf_include_path ${ABS_PATH} _contains_already)
-      if(${_contains_already} EQUAL -1)
-          list(APPEND _protobuf_include_path -I ${ABS_PATH})
-      endif()
-    endforeach()
-  else()
-    set(_protobuf_include_path)
-  endif()
-
-  if(DEFINED PROTOBUF_IMPORT_DIRS)
-    foreach(DIR ${PROTOBUF_IMPORT_DIRS})
-      get_filename_component(ABS_PATH ${DIR} ABSOLUTE)
-      list(FIND _protobuf_include_path ${ABS_PATH} _contains_already)
-      if(${_contains_already} EQUAL -1)
-          list(APPEND _protobuf_include_path -I ${ABS_PATH})
-      endif()
-    endforeach()
-  endif()
-
-  set(${SRCS})
-  set(${HDRS})
-  foreach(FIL ${ARGN})
-    get_filename_component(ABS_FIL ${FIL} ABSOLUTE)
-    get_filename_component(FIL_WE ${FIL} NAME_WE)
-    get_filename_component(FIL_DIR ${ABS_FIL} DIRECTORY)
-
-    list(APPEND _protobuf_include_path -I ${FIL_DIR})
-    list(APPEND ${SRCS} "${CMAKE_BINARY_DIR}/${FIL_WE}.grpc.pb.cc")
-    list(APPEND ${SRCS} "${CMAKE_BINARY_DIR}/${FIL_WE}.pb.cc")
-    list(APPEND ${HDRS} "${CMAKE_BINARY_DIR}/${FIL_WE}.grpc.pb.h")
-    list(APPEND ${HDRS} "${CMAKE_BINARY_DIR}/${FIL_WE}.pb.h")
-    add_custom_command(
-      OUTPUT "${CMAKE_BINARY_DIR}/${FIL_WE}.grpc.pb.cc"
-             "${CMAKE_BINARY_DIR}/${FIL_WE}.pb.cc"
-             "${CMAKE_BINARY_DIR}/${FIL_WE}.grpc.pb.h"
-             "${CMAKE_BINARY_DIR}/${FIL_WE}.pb.h"
-      COMMAND  ${PROTOBUF_PROTOC_EXECUTABLE}
-      ARGS --cpp_out ${CMAKE_BINARY_DIR} 
-      --grpc_out  ${CMAKE_BINARY_DIR} 
-      ${_protobuf_include_path} 
-      --plugin=protoc-gen-grpc=${GRPC_CPP_PLUGIN} 
-      ${ABS_FIL}
-      DEPENDS ${ABS_FIL} ${PROTOBUF_PROTOC_EXECUTABLE}
-      COMMENT "Running C++ protocol buffer compiler on ${FIL} using gRPC plugin"
-      VERBATIM )
-  endforeach()
-
-  set_source_files_properties(${${SRCS}} ${${HDRS}} PROPERTIES GENERATED TRUE)
-  set(${SRCS} ${${SRCS}} PARENT_SCOPE)
-  set(${HDRS} ${${HDRS}} PARENT_SCOPE)
-endfunction()
-
-# grpc python
-
-function(GRPC_GENERATE_PYTHON SRCS)
-  if(NOT ARGN)
-    message(SEND_ERROR "Error: GRPC_GENERATE_PYTHON() called without any proto files")
-    return()
-  endif()
-  
-  find_package(PythonInterp)
-  if(NOT PYTHONINTERP_FOUND)
-    message(SEND_ERROR "Error: Python Interpreter is not found.")
-    return()
-  endif()
-  
-  execute_process(
-    COMMAND ${PYTHON_EXECUTABLE} -m grpc_tools.protoc
-    ERROR_VARIABLE _pygrpc_output
-  )
-  
-  if (NOT (${_pygrpc_output} STREQUAL "Missing input file.\n"))
-    message(SEND_ERROR 
-      "Error: grpcio_tools not installed\ntry: sudo pip install grpcio_tools"
-    ) 
-    return() 
-  endif()
-
-  if(GRPC_GENERATE_CPP_APPEND_PATH)
-    # Create an include path for each file specified
-    foreach(FIL ${ARGN})
-      get_filename_component(ABS_FIL ${FIL} ABSOLUTE)
-      get_filename_component(ABS_PATH ${ABS_FIL} PATH)
-      list(FIND _protobuf_include_path ${ABS_PATH} _contains_already)
-      if(${_contains_already} EQUAL -1)
-          list(APPEND _protobuf_include_path -I ${ABS_PATH})
-      endif()
-    endforeach()
-  else()
-    set(_protobuf_include_path)
-  endif()
-
-  if(DEFINED PROTOBUF_IMPORT_DIRS)
-    foreach(DIR ${PROTOBUF_IMPORT_DIRS})
-      get_filename_component(ABS_PATH ${DIR} ABSOLUTE)
-      list(FIND _protobuf_include_path ${ABS_PATH} _contains_already)
-      if(${_contains_already} EQUAL -1)
-          list(APPEND _protobuf_include_path -I ${ABS_PATH})
-      endif()
-    endforeach()
-  endif()
-
-  set(${SRCS})
-  foreach(FIL ${ARGN})
-    get_filename_component(ABS_FIL ${FIL} ABSOLUTE)
-    get_filename_component(FIL_WE ${FIL} NAME_WE)
-    get_filename_component(FIL_DIR ${ABS_FIL} DIRECTORY)
-
-    list(APPEND _protobuf_include_path -I ${FIL_DIR})
-    list(APPEND ${SRCS} "${CMAKE_BINARY_DIR}/${FIL_WE}_pb2.py"
-      "${CMAKE_BINARY_DIR}/${FIL_WE}_pb2_grpc.py")
-
-    add_custom_command(
-      OUTPUT "${CMAKE_BINARY_DIR}/${FIL_WE}_pb2.py" "${CMAKE_BINARY_DIR}/${FIL_WE}_pb2_grpc.py"
-      COMMAND  ${PYTHON_EXECUTABLE} -m grpc_tools.protoc ${_protobuf_include_path}  --python_out ${CMAKE_BINARY_DIR} --grpc_python_out ${CMAKE_BINARY_DIR} ${ABS_FIL}
-      DEPENDS ${ABS_FIL} ${PROTOBUF_PROTOC_EXECUTABLE}
-      COMMENT "Running Python protocol buffer compiler on ${FIL} for grpc"
-      VERBATIM )
-  endforeach()
-
-  set(${SRCS} ${${SRCS}} PARENT_SCOPE)
-endfunction()
-
-if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-  set(_PROTOBUF_ARCH_DIR x64/)
-  set(_GRPC_ARCH_DIR x64/)
-endif()
-
 # Internal function: search for normal library as well as a debug one
 #    if the debug one is specified also include debug/optimized keywords
 #    in *_LIBRARIES variable
 function(_protobuf_find_libraries name filename)
-   find_library(${name}_LIBRARY
-       NAMES ${filename}
-       PATHS ${PROTOBUF_SRC_ROOT_FOLDER}/vsprojects/${_PROTOBUF_ARCH_DIR}Release)
-   mark_as_advanced(${name}_LIBRARY)
+  find_library(${name}_LIBRARY
+          NAMES ${filename}
+          PATHS ${PROTOBUF_SRC_ROOT_FOLDER}/vsprojects/${_PROTOBUF_ARCH_DIR}Release)
+  mark_as_advanced(${name}_LIBRARY)
 
-   find_library(${name}_LIBRARY_DEBUG
-       NAMES ${filename}
-       PATHS ${PROTOBUF_SRC_ROOT_FOLDER}/vsprojects/${_PROTOBUF_ARCH_DIR}Debug)
-   mark_as_advanced(${name}_LIBRARY_DEBUG)
+  find_library(${name}_LIBRARY_DEBUG
+          NAMES ${filename}
+          PATHS ${PROTOBUF_SRC_ROOT_FOLDER}/vsprojects/${_PROTOBUF_ARCH_DIR}Debug)
+  mark_as_advanced(${name}_LIBRARY_DEBUG)
 
-   if(NOT ${name}_LIBRARY_DEBUG)
-      # There is no debug library
-      set(${name}_LIBRARY_DEBUG ${${name}_LIBRARY} PARENT_SCOPE)
-      set(${name}_LIBRARIES     ${${name}_LIBRARY} PARENT_SCOPE)
-   else()
-      # There IS a debug library
-      set(${name}_LIBRARIES
-          optimized ${${name}_LIBRARY}
-          debug     ${${name}_LIBRARY_DEBUG}
-          PARENT_SCOPE
-      )
-   endif()
+  if (NOT ${name}_LIBRARY_DEBUG)
+    # There is no debug library
+    set(${name}_LIBRARY_DEBUG ${${name}_LIBRARY} PARENT_SCOPE)
+    set(${name}_LIBRARIES ${${name}_LIBRARY} PARENT_SCOPE)
+  else ()
+    # There IS a debug library
+    set(${name}_LIBRARIES
+            optimized ${${name}_LIBRARY}
+            debug ${${name}_LIBRARY_DEBUG}
+            PARENT_SCOPE
+            )
+  endif ()
 endfunction()
 
 # Internal function: search for normal library
 function(_grpc_find_libraries name filename)
   find_library(${name}_LIBRARY
-    NAMES ${filename}
-    PATHS ${GRPC_SRC_ROOT_FOLDER}/vsprojects/${_GRPC_ARCH_DIR}Release)
+          NAMES ${filename}
+          PATHS ${GRPC_SRC_ROOT_FOLDER}/vsprojects/${_GRPC_ARCH_DIR}Release)
   mark_as_advanced(${name}_LIBRARY)
 
   find_library(${name}_LIBRARY_DEBUG
-    NAMES ${filename}
-    PATHS ${GRPC_SRC_ROOT_FOLDER}/vsprojects/${_GRPC_ARCH_DIR}Debug)
+          NAMES ${filename}
+          PATHS ${GRPC_SRC_ROOT_FOLDER}/vsprojects/${_GRPC_ARCH_DIR}Debug)
   mark_as_advanced(${name}_LIBRARY_DEBUG)
 
-  if(NOT ${name}_LIBRARY_DEBUG)
+  if (NOT ${name}_LIBRARY_DEBUG)
     # There is no debug library
     set(${name}_LIBRARY_DEBUG ${${name}_LIBRARY} PARENT_SCOPE)
-  else()
+  else ()
     # There IS a debug library
     set(${name}_LIBRARIES
-      optimized ${${name}_LIBRARY}
-      debug     ${${name}_LIBRARY_DEBUG}
-      PARENT_SCOPE
-    )
-  endif()
+            optimized ${${name}_LIBRARY}
+            debug ${${name}_LIBRARY_DEBUG}
+            PARENT_SCOPE
+            )
+  endif ()
 endfunction()
 
 # Internal function: find threads library
 function(_protobuf_find_threads)
-    set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
-    find_package(Threads)
-    if(Threads_FOUND)
-        list(APPEND PROTOBUF_LIBRARIES ${CMAKE_THREAD_LIBS_INIT})
-        set(PROTOBUF_LIBRARIES "${PROTOBUF_LIBRARIES}" PARENT_SCOPE)
-    endif()
+  set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+  find_package(Threads)
+  if (Threads_FOUND)
+    list(APPEND PROTOBUF_LIBRARIES ${CMAKE_THREAD_LIBS_INIT})
+    set(PROTOBUF_LIBRARIES "${PROTOBUF_LIBRARIES}" PARENT_SCOPE)
+  endif ()
 endfunction()
 
 # Internal function: find dl library
@@ -504,20 +254,20 @@ endfunction()
 
 # By default have PROTOBUF_GENERATE_CPP macro pass -I to protoc
 # for each directory where a proto file is referenced.
-if(NOT DEFINED PROTOBUF_GENERATE_CPP_APPEND_PATH)
+if (NOT DEFINED PROTOBUF_GENERATE_CPP_APPEND_PATH)
   set(PROTOBUF_GENERATE_CPP_APPEND_PATH TRUE)
-endif()
+endif ()
 
 
 # Google's provided vcproj files generate libraries with a "lib"
 # prefix on Windows
-if(MSVC)
-    set(PROTOBUF_ORIG_FIND_LIBRARY_PREFIXES "${CMAKE_FIND_LIBRARY_PREFIXES}")
-    set(CMAKE_FIND_LIBRARY_PREFIXES "lib" "")
+if (MSVC)
+  set(PROTOBUF_ORIG_FIND_LIBRARY_PREFIXES "${CMAKE_FIND_LIBRARY_PREFIXES}")
+  set(CMAKE_FIND_LIBRARY_PREFIXES "lib" "")
 
-    find_path(PROTOBUF_SRC_ROOT_FOLDER protobuf.pc.in)
-    find_path(GRPC_SRC_ROOT_FOLDER grpc.def)
-endif()
+  find_path(PROTOBUF_SRC_ROOT_FOLDER protobuf.pc.in)
+  find_path(GRPC_SRC_ROOT_FOLDER grpc.def)
+endif ()
 
 # The Protobuf library
 _protobuf_find_libraries(PROTOBUF protobuf)
@@ -529,18 +279,18 @@ _protobuf_find_libraries(PROTOBUF_LITE protobuf-lite)
 _protobuf_find_libraries(PROTOBUF_PROTOC protoc)
 
 # Restore original find library prefixes
-if(MSVC)
-    set(CMAKE_FIND_LIBRARY_PREFIXES "${PROTOBUF_ORIG_FIND_LIBRARY_PREFIXES}")
-endif()
+if (MSVC)
+  set(CMAKE_FIND_LIBRARY_PREFIXES "${PROTOBUF_ORIG_FIND_LIBRARY_PREFIXES}")
+endif ()
 
 _grpc_find_libraries(GRPC grpc)
 _grpc_find_libraries(GRPC++ grpc++)
 _grpc_find_libraries(GRPC++_REFLECTION grpc++_reflection)
 
-if(UNIX)
-    _protobuf_find_threads()
-    _grpc_find_dl()
-endif()
+if (UNIX)
+  _protobuf_find_threads()
+  _grpc_find_dl()
+endif ()
 
 set(GRPC_LIBRARIES ${GRPC_LIBRARY})
 list(APPEND GRPC_LIBRARIES ${GRPC++_LIBRARY} ${GRPC++_REFLECTION_LIBRARY})
@@ -548,54 +298,142 @@ list(APPEND GRPC_LIBRARIES ${PROTOBUF_LIBRARIES})
 
 # Find the include directory
 find_path(PROTOBUF_INCLUDE_DIR
-    google/protobuf/service.h
-    PATHS ${PROTOBUF_SRC_ROOT_FOLDER}/src
-)
+        google/protobuf/service.h
+        PATHS ${PROTOBUF_SRC_ROOT_FOLDER}/src
+        )
 mark_as_advanced(PROTOBUF_INCLUDE_DIR)
 
 find_path(GRPC_INCLUDE_DIR
-    grpc/grpc.h
-    PATHS ${GRPC_SRC_ROOT_FOLDER}/include
-)
+        grpc/grpc.h
+        PATHS ${GRPC_SRC_ROOT_FOLDER}/include
+        )
 mark_as_advanced(GRPC_INCLUDE_DIR)
 
 # Find the protoc Executable
 find_program(PROTOBUF_PROTOC_EXECUTABLE
-    NAMES protoc
-    DOC "The Google Protocol Buffers Compiler"
-    PATHS
-    ${PROTOBUF_SRC_ROOT_FOLDER}/vsprojects/${_PROTOBUF_ARCH_DIR}Release
-    ${PROTOBUF_SRC_ROOT_FOLDER}/vsprojects/${_PROTOBUF_ARCH_DIR}Debug
-)
+        NAMES protoc
+        DOC "The Google Protocol Buffers Compiler"
+        PATHS
+        ${PROTOBUF_SRC_ROOT_FOLDER}/vsprojects/${_PROTOBUF_ARCH_DIR}Release
+        ${PROTOBUF_SRC_ROOT_FOLDER}/vsprojects/${_PROTOBUF_ARCH_DIR}Debug
+        )
 mark_as_advanced(PROTOBUF_PROTOC_EXECUTABLE)
 
 find_program(GRPC_CPP_PLUGIN
-    NAMES grpc_cpp_plugin
-    DOC "The Google RPC C++ Plugin for Protoc"
-    PATHS
-    ${GRPC_SRC_ROOT_FOLDER}/vsprojects/${_GRPC_ARCH_DIR}Release
-    ${GRPC_SRC_ROOT_FOLDER}/vsprojects/${_GRPC_ARCH_DIR}Debug
-)
+        NAMES grpc_cpp_plugin
+        DOC "The Google RPC C++ Plugin for Protoc"
+        PATHS
+        ${GRPC_SRC_ROOT_FOLDER}/vsprojects/${_GRPC_ARCH_DIR}Release
+        ${GRPC_SRC_ROOT_FOLDER}/vsprojects/${_GRPC_ARCH_DIR}Debug
+        )
 mark_as_advanced(GRPC_CPP_PLUGIN)
 
 find_program(GRPC_PYTHON_PLUGIN
-    NAMES grpc_python_plugin
-    DOC "The Google RPC Python Plugin for Protoc"
-    PATHS
-    ${GRPC_SRC_ROOT_FOLDER}/vsprojects/${_GRPC_ARCH_DIR}Release
-    ${GRPC_SRC_ROOT_FOLDER}/vsprojects/${_GRPC_ARCH_DIR}Debug
-)
+        NAMES grpc_python_plugin
+        DOC "The Google RPC Python Plugin for Protoc"
+        PATHS
+        ${GRPC_SRC_ROOT_FOLDER}/vsprojects/${_GRPC_ARCH_DIR}Release
+        ${GRPC_SRC_ROOT_FOLDER}/vsprojects/${_GRPC_ARCH_DIR}Debug
+        )
 mark_as_advanced(GRPC_PYTHON_PLUGIN)
 
 find_package(PackageHandleStandardArgs)
 
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(GRPC DEFAULT_MSG
-  GRPC_LIBRARY GRPC_INCLUDE_DIR PROTOBUF_INCLUDE_DIR 
-  GRPC_PYTHON_PLUGIN GRPC_CPP_PLUGIN)
+        GRPC_LIBRARY GRPC_INCLUDE_DIR PROTOBUF_INCLUDE_DIR
+        GRPC_PYTHON_PLUGIN GRPC_CPP_PLUGIN)
 
-if(PROTOBUF_FOUND)
-    set(PROTOBUF_INCLUDE_DIRS ${PROTOBUF_INCLUDE_DIR})
-endif()
-if(GRPC_FOUND)
-    set(GRPC_INCLUDE_DIRS ${GRPC_INCLUDE_DIR})
-endif()
+if (PROTOBUF_FOUND)
+  set(PROTOBUF_INCLUDE_DIRS ${PROTOBUF_INCLUDE_DIR})
+endif ()
+if (GRPC_FOUND)
+  set(GRPC_INCLUDE_DIRS ${GRPC_INCLUDE_DIR})
+endif ()
+
+if (GRPC_FOUND)
+  if (NOT TARGET gRPC::grpc++)
+    add_library(gRPC::grpc++ UNKNOWN IMPORTED)
+    set_target_properties(gRPC::grpc++ PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES ${GRPC_INCLUDE_DIRS}
+            IMPORTED_LOCATION ${GRPC++_LIBRARY}
+            )
+    target_link_libraries(gRPC::grpc++ INTERFACE ${GRPC_LIBRARY} ${CMAKE_DL_LIBS})
+  endif ()
+  if (NOT TARGET gRPC::grpc++_reflection)
+    add_library(gRPC::grpc++_reflection UNKNOWN IMPORTED)
+    set_target_properties(gRPC::grpc++_reflection PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES ${GRPC_INCLUDE_DIRS}
+            IMPORTED_LOCATION ${GRPC++_REFLECTION_LIBRARY}
+            )
+    target_link_libraries(gRPC::grpc++_reflection INTERFACE gRPC::grpc++ ${CMAKE_DL_LIBS})
+  endif ()
+  if (NOT TARGET gRPC::grpc_cpp_plugin)
+    add_library(gRPC::grpc_cpp_plugin UNKNOWN IMPORTED)
+    set_target_properties(gRPC::grpc_cpp_plugin PROPERTIES IMPORTED_LOCATION ${GRPC_CPP_PLUGIN})
+  endif ()
+
+  # Generates C++ sources from the .proto files
+  #
+  # grpc_generate_cpp (<SRCS> <HDRS> <DEST> [<ARGN>...])
+  #
+  #  SRCS - variable to define with autogenerated source files
+  #  HDRS - variable to define with autogenerated header files
+  #  DEST - directory where the source files will be created
+  #  ARGN - .proto files
+  function(GRPC_GENERATE_CPP SRCS HDRS SRC_DIR DEST_DIR)
+    if (NOT ARGN)
+      message(SEND_ERROR "Error: GRPC_GENERATE_CPP() called without any proto files")
+      return()
+    endif ()
+
+    if (DEFINED PROTOBUF_IMPORT_DIRS)
+      foreach (DIR ${PROTOBUF_IMPORT_DIRS})
+        get_filename_component(ABS_PATH ${DIR} ABSOLUTE)
+        list(FIND _protobuf_include_path ${ABS_PATH} _contains_already)
+        if (${_contains_already} EQUAL -1)
+          list(APPEND _protobuf_include_path -I ${ABS_PATH})
+        endif ()
+      endforeach ()
+    endif ()
+
+    set(${SRCS})
+    set(${HDRS})
+    set(ABS_PROTOS "")
+
+    get_target_property(GRPC_CPP_PLUGIN gRPC::grpc_cpp_plugin LOCATION)
+
+    foreach (PROTO_FILE ${ARGN})
+      get_filename_component(ABS_FILE ${PROTO_FILE} ABSOLUTE)
+
+      # maintain the relative directory structure
+      file(RELATIVE_PATH REL_FILE ${SRC_DIR} ${PROTO_FILE})
+      get_filename_component(FILE ${REL_FILE} NAME_WE)
+      get_filename_component(DIR ${REL_FILE} DIRECTORY)
+
+      list(APPEND ${SRCS} "${DEST_DIR}/${DIR}/${FILE}.pb.cc")
+      list(APPEND ${HDRS} "${DEST_DIR}/${DIR}/${FILE}.pb.h")
+      list(APPEND ${SRCS} "${DEST_DIR}/${DIR}/${FILE}.grpc.pb.cc")
+      list(APPEND ${HDRS} "${DEST_DIR}/${DIR}/${FILE}.grpc.pb.h")
+
+      list(APPEND ABS_PROTOS ${ABS_FILE})
+    endforeach ()
+
+    add_custom_command(
+            OUTPUT
+            ${${SRCS}}
+            ${${HDRS}}
+            COMMAND protobuf::protoc
+            ARGS --cpp_out ${DEST_DIR} --grpc_out ${DEST_DIR}
+            ${_protobuf_include_path}
+            --plugin=protoc-gen-grpc=${GRPC_CPP_PLUGIN}
+            ${ABS_PROTOS}
+            DEPENDS ${SRC_DIR} ${ABS_PROTOS} protobuf::protoc gRPC::grpc_cpp_plugin
+            COMMENT "Running C++ gRPC compiler"
+            VERBATIM
+    )
+
+    set_source_files_properties(${${SRCS}} ${${HDRS}} PROPERTIES GENERATED TRUE)
+    set(${SRCS} ${${SRCS}} PARENT_SCOPE)
+    set(${HDRS} ${${HDRS}} PARENT_SCOPE)
+  endfunction()
+endif ()

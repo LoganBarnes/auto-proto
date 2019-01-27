@@ -243,7 +243,7 @@ bool message_has_field(const gp::Message& msg, const gp::FieldDescriptor* field)
 }
 
 std::unique_ptr<grpc::ByteBuffer> serialize_to_byte_buffer(const gp::Message& message) {
-    auto buffer = util::make_unique<grpc::ByteBuffer>();
+    auto buffer = std::make_unique<grpc::ByteBuffer>();
     bool own_buffer;
     grpc::SerializationTraits<gp::Message>::Serialize(message, buffer.get(), &own_buffer);
     return buffer;

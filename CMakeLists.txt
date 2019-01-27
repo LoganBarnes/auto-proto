@@ -60,10 +60,8 @@ endif ()
 ###########################
 ### Protobuf Generation ###
 ###########################
-if (PROJ_ARM_SERVER_ONLY)
-    list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/external/cmake)
-endif ()
-find_package(gRPC REQUIRED)
+#list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/external/cmake)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/external/cmake)
 add_subdirectory(protos)
 
 #######################

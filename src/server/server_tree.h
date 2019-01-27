@@ -120,7 +120,7 @@ private:
 
 template <typename T, typename>
 bool ServerTree::add_output(std::shared_ptr<util::BlockingQueue<T>> queue) {
-    auto data = util::make_unique<SinkData<T>>(std::move(queue));
+    auto data = std::make_unique<SinkData<T>>(std::move(queue));
 
     auto key = get_key(data->get_data());
     if (sinks_.find(key) != sinks_.end()) {

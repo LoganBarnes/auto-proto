@@ -28,7 +28,7 @@ private:
     std::unique_ptr<MessageNode> build_node(google::protobuf::Message* message);
     std::unique_ptr<MessageNode> build_node(const google::protobuf::Descriptor* message);
 
-    bool configure_gui(const std::string& name, const MessageNode& msg_pkg, const GuiOptions& options);
+    bool configure_gui(const std::string& name, const MessageNode& node, const GuiOptions& options);
 };
 
 } // namespace proj

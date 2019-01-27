@@ -18,9 +18,9 @@ namespace svr {
 Server::Server(std::string server_address)
     : server_address_(std::move(server_address))
     , stream_queue_(std::make_shared<util::BlockingQueue<proj::proto::Sink2>>())
-    , server_tree_(util::make_unique<ServerTree>())
-    , stream_handler_(util::make_unique<StreamHandler<proj::proto::Sink2>>())
-    , compute_test_(util::make_unique<Compute>()) {
+    , server_tree_(std::make_unique<ServerTree>())
+    , stream_handler_(std::make_unique<StreamHandler<proj::proto::Sink2>>())
+    , compute_test_(std::make_unique<Compute>()) {
 
     server_tree_->add_output(stream_queue_);
 
